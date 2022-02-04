@@ -49,7 +49,7 @@ void error_at(char *loc, char *fmt, ...) {
 
 	int pos = loc - user_input;
 	fprintf(stderr, "%s\n", user_input);
-	fprintf(stderr, "%*s", pos, " ");
+	fprintf(stderr, "%*s", pos-1, " ");
 	fprintf(stderr, "^ ");
 	vfprintf(stderr, fmt, ap);
 	fprintf(stderr, "\n");
@@ -110,7 +110,9 @@ Token *tokenize(char *p) {
 			continue;
 		}
 
-		if(*p == '+' || *p == '-'){
+		if(*p == '+' || *p == '-' ||
+				*p == '*' || *p == '/' || 
+				*p == '(' || *p == ')'){
 			cur = new_token(TK_RESERVED, cur, p++);
 			continue;
 		}
@@ -130,7 +132,7 @@ Token *tokenize(char *p) {
 
 Node *new_node(NodeKind kind, Node *lhs, Node *rhs) {
 	Node *node = calloc(1, sizeof(Node));
-	node->kind;
+	node->kind = kind;
 	node->lhs = lhs;
 	node->rhs = rhs;
 	return node;
@@ -161,14 +163,18 @@ Node *expr() {
 	}
 }
 
+int count = 0;
 Node *mul() {
 	Node *node = primary();
 
 	for(;;) {
-		if(consume('*'))
+		if(consume('*')){
+			fprintf(stderr, "*\n");
 			node = new_node(ND_MUL, node, primary());
-		if(consume('/'))
+		}
+		if(consume('/')){
 			node = new_node(ND_DIV, node, primary());
+		}
 		else
 			return node;
 	}
@@ -199,6 +205,8 @@ void gen(Node *node) {
 	switch (node->kind){
 		case ND_ADD:
 			printf("	add rax, rdi\n");
+			if(node->kind == ND_ADD) fprintf(stderr, "ND_ADD\n");
+			if(node->kind == ND_MUL) fprintf(stderr, "ND_MUL\n");
 			break;
 		case ND_SUB:
 			printf("	sub rax, rdi\n");
@@ -207,7 +215,7 @@ void gen(Node *node) {
 			printf("	imul rax, rdi\n");
 			break;
 		case ND_DIV:
-			printf("	cpo\n");
+			printf("	cqo\n");
 			printf("	idiv rdi\n");
 			break;
 	}
