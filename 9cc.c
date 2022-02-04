@@ -148,6 +148,7 @@ Node *new_node_num(int val) {
 //非終端記号関数
 Node *expr(void);
 Node *mul(void);
+Node *unary(void);
 Node *primary(void);
 
 Node *expr() {
@@ -163,21 +164,28 @@ Node *expr() {
 	}
 }
 
-int count = 0;
 Node *mul() {
-	Node *node = primary();
+	Node *node = unary();
 
 	for(;;) {
 		if(consume('*')){
 			fprintf(stderr, "*\n");
-			node = new_node(ND_MUL, node, primary());
+			node = new_node(ND_MUL, node, unary());
 		}
 		if(consume('/')){
-			node = new_node(ND_DIV, node, primary());
+			node = new_node(ND_DIV, node, unary());
 		}
 		else
 			return node;
 	}
+}
+
+Node *unary() {
+	if (consume('+'))
+		return primary();
+	if (consume('-'))
+		return new_node(ND_SUB, new_node_num(0), primary());
+	return primary();
 }
 
 Node *primary() {
